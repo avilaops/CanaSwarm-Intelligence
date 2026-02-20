@@ -1,0 +1,54 @@
+{
+  "analysis_date": "2026-02-20T14:00:00Z",
+  "analysis_id": "VIS-20260220-001",
+  "area_ha": 130,
+  "crop": "sugarcane",
+  "field_id": "F001",
+  "field_name": "Talhão Piracicaba Sul",
+  "harvest_number": 4,
+  "indices": {
+    "moisture_index": 0.58,
+    "ndvi_avg": 0.65,
+    "ndvi_std": 0.12,
+    "red_edge_avg": 0.42
+  },
+  "maturity": {
+    "confidence": 0.92,
+    "estimated_sugar_content_percent": 14.2,
+    "harvest_recommendation": "ready_in_2_weeks",
+    "maturity_level": "mature",
+    "maturity_score": 0.78
+  },
+  "recommendations": [
+    {
+      "action": "schedule_harvest",
+      "priority": "high",
+      "reason": "Maturidade ótima detectada, açúcar em pico",
+      "timeframe": "14_days"
+    },
+    {
+      "action": "monitor_zone",
+      "priority": "medium",
+      "reason": "Zona atrasada, reavaliar em 1 semana",
+      "zone_id": "Z001"
+    }
+  ],
+  "zones": [
+    {
+      "area_ha": 50.2,
+      "maturity_level": "developing",
+      "maturity_score": 0.65,
+      "ndvi_avg": 0.58,
+      "notes": "Zona com desenvolvimento atrasado, colher por último",
+      "zone_id": "Z001"
+    },
+    {
+      "area_ha": 79.8,
+      "maturity_level": "optimal",
+      "maturity_score": 0.85,
+      "ndvi_avg": 0.72,
+      "notes": "Zona ótima para colheita, priorizar",
+      "zone_id": "Z002"
+    }
+  ]
+}

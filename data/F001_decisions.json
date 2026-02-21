@@ -1,0 +1,63 @@
+{
+  "field_id": "F001-UsinaGuarani-Piracicaba",
+  "crop": "cana-de-açúcar",
+  "season": "2025/26",
+  "total_area_ha": 150.5,
+  "analysis_date": "2026-02-20",
+  "decision_date": "2026-02-20 23:55:16",
+  "priority": {
+    "level": "critical",
+    "score": 9.5,
+    "reason": "1 critical zone(s) require immediate intervention"
+  },
+  "total_estimated_roi_brl_year": 385000.0,
+  "zones": [
+    {
+      "zone_id": "Z001",
+      "area_ha": 45.2,
+      "current_status": "warning",
+      "action": {
+        "action": "reform",
+        "priority": "high",
+        "estimated_roi_brl_year": 120000.0,
+        "implementation_cost_brl": 15000.0,
+        "payback_months": 8,
+        "justification": "Zone Z001: 18% yield gap. Expected gain: R$ 120,000/year."
+      }
+    },
+    {
+      "zone_id": "Z002",
+      "area_ha": 58.8,
+      "current_status": "optimal",
+      "action": {
+        "action": "maintain",
+        "priority": "low",
+        "estimated_roi_brl_year": 85000.0,
+        "implementation_cost_brl": null,
+        "payback_months": null,
+        "justification": "Zone Z002: Performing at 98% of potential. Maintain current management."
+      }
+    },
+    {
+      "zone_id": "Z003",
+      "area_ha": 46.5,
+      "current_status": "critical",
+      "action": {
+        "action": "immediate_reform",
+        "priority": "critical",
+        "estimated_roi_brl_year": 180000.0,
+        "implementation_cost_brl": 18000.0,
+        "payback_months": 6,
+        "justification": "Zone Z003: 35% yield gap. Expected gain: R$ 180,000/year."
+      }
+    }
+  ],
+  "next_steps": [
+    "🔴 URGENT: Schedule soil analysis for critical zones: Z003",
+    "Request reform quotes for zones: Z003",
+    "🟡 Schedule intervention for warning zones: Z001",
+    "🟢 Monitor optimal zones: Z002",
+    "💰 Budget allocation: R$ 33,000 for reforms",
+    "📅 Schedule follow-up analysis in 30 days"
+  ]
+}

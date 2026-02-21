@@ -4,6 +4,7 @@ CanaSwarm Intelligence Platform - REST API
 Aggregates data from Precision Platform and provides actionable decisions.
 """
 
+import os
 from datetime import datetime
 from typing import List
 
@@ -18,6 +19,7 @@ from .models import (
     ZoneDecision,
 )
 from .storage import InMemoryStorage
+from .storage_sql import SQLiteStorage
 
 
 # Initialize FastAPI app
@@ -31,8 +33,15 @@ app = FastAPI(
     },
 )
 
-# Initialize storage
-storage = InMemoryStorage(data_dir="data")
+# Initialize storage (SQLite by default, InMemory for testing)
+STORAGE_TYPE = os.getenv("STORAGE_TYPE", "sqlite").lower()
+
+if STORAGE_TYPE == "sqlite":
+    storage = SQLiteStorage(db_path="data/intelligence.db")
+    storage_info = {"type": "SQLite", "path": "data/intelligence.db"}
+else:
+    storage = InMemoryStorage(data_dir="data")
+    storage_info = {"type": "InMemory", "path": "data/"}
 
 
 @app.get("/")
@@ -41,11 +50,13 @@ async def root():
     return {
         "service": "CanaSwarm Intelligence Platform API",
         "version": "1.0.0",
+        "storage": storage_info,
         "status": "operational",
         "endpoints": {
             "ingest": "/api/v1/precision/ingest (POST)",
             "decision": "/api/v1/decision (GET)",
             "fields": "/api/v1/fields (GET)",
+            "stats": "/api/v1/stats (GET)",
             "health": "/health (GET)",
             "docs": "/docs (GET)",
         },
@@ -72,6 +83,21 @@ async def list_fields():
         "fields": list(fields.values()),
         "total": len(fields),
     }
+
+
+@app.get("/api/v1/stats")
+async def get_stats():
+    """Get storage statistics (SQLite only)."""
+    if hasattr(storage, "get_stats"):
+        return storage.get_stats()
+    else:
+        # Fallback for InMemoryStorage
+        fields = storage.list_fields()
+        return {
+            "storage_type": "InMemory",
+            "total_fields": len(fields),
+            "note": "Limited stats available for InMemory storage",
+        }
 
 
 @app.post(

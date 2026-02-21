@@ -31,7 +31,7 @@ EXPOSE 6000
 
 # Health check
 HEALTHCHECK --interval=5s --timeout=3s --retries=10 \
-  CMD curl -f http://localhost:6000/api/v1/health || exit 1
+  CMD curl -f http://localhost:6000/health || exit 1
 
 # Run application
 CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "6000"]

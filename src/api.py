@@ -53,7 +53,8 @@ async def root():
         "storage": storage_info,
         "status": "operational",
         "endpoints": {
-            "ingest": "/api/v1/precision/ingest (POST)",
+            "ingest_precision": "/api/v1/precision/ingest (POST)",
+            "ingest_vision": "/api/v1/vision/ingest (POST)",
             "decision": "/api/v1/decision (GET)",
             "fields": "/api/v1/fields (GET)",
             "stats": "/api/v1/stats (GET)",
@@ -135,6 +136,65 @@ async def ingest_precision_data(recommendations: FieldRecommendations):
         "decision_generated": True,
         "priority": decision.priority.level,
         "estimated_roi_brl_year": decision.total_estimated_roi_brl_year,
+    }
+
+
+@app.post(
+    "/api/v1/vision/ingest",
+    status_code=201,
+    summary="Ingest Vision Analysis data",
+    description="Receive and store computer vision analysis from AI-Vision-Agriculture",
+)
+async def ingest_vision_data(analysis: dict):
+    """
+    Ingest computer vision analysis data.
+    
+    This endpoint:
+    1. Receives vision analysis (crop health, weeds, pests, diseases)
+    2. Stores analysis data
+    3. Updates field decision if Precision data exists
+    
+    Args:
+        analysis: Vision analysis from AI-Vision-Agriculture
+        
+    Returns:
+        Confirmation with field ID and detection summary
+    """
+    # Extract field/zone info
+    field_id = analysis["location"]["field_id"]
+    zone_id = analysis["location"]["zone_id"]
+    detections = analysis["detections"]
+    
+    # Count detections
+    num_weeds = len(detections.get("weeds", []))
+    num_pests = len(detections.get("pests", []))
+    num_diseases = len(detections.get("diseases", []))
+    total_detections = num_weeds + num_pests + num_diseases
+    
+    # Store vision analysis (simplified - could enhance storage later)
+    # For now, just update decision if it exists
+    decision = storage.get_decision(field_id)
+    
+    decision_updated = False
+    if decision:
+        # Update decision with vision insights
+        decision = _update_decision_with_vision(decision, analysis)
+        storage.store_decision(decision)
+        decision_updated = True
+    
+    return {
+        "message": "Vision data ingested successfully",
+        "field_id": field_id,
+        "zone_id": zone_id,
+        "analysis_id": analysis["analysis_id"],
+        "detections": {
+            "weeds": num_weeds,
+            "pests": num_pests,
+            "diseases": num_diseases,
+            "total": total_detections
+        },
+        "crop_health": detections.get("crop_health", {}).get("status"),
+        "decision_updated": decision_updated,
     }
 
 
@@ -314,6 +374,63 @@ def _calculate_priority(
         score=min(score, 10.0),
         reason=reason,
     )
+
+
+def _update_decision_with_vision(decision: FieldDecision, analysis: dict) -> FieldDecision:
+    """
+    Update field decision with vision analysis insights.
+    
+    Incorporates computer vision detections (weeds, pests, diseases)
+    to adjust priority and add specific recommendations.
+    
+    Args:
+        decision: Existing field decision
+        analysis: Vision analysis data
+        
+    Returns:
+        Updated FieldDecision with vision insights
+    """
+    detections = analysis["detections"]
+    crop_health = detections.get("crop_health", {})
+    
+    # Adjust priority if crop health is bad
+    if crop_health.get("status") in ["stressed", "diseased", "damaged"]:
+        # Elevate priority
+        old_score = decision.priority.score
+        decision.priority.score = min(old_score + 1.0, 10.0)
+        decision.priority.reason += f" + Vision: crop health {crop_health.get('status')}"
+        
+        # Re-evaluate priority level
+        if decision.priority.score >= 9.0:
+            decision.priority.level = "critical"
+        elif decision.priority.score >= 7.0:
+            decision.priority.level = "high"
+        elif decision.priority.score >= 5.0:
+            decision.priority.level = "medium"
+    
+    # Add vision-based recommendations to next steps
+    recommendations = analysis.get("recommendations", [])
+    vision_steps = []
+    
+    for rec in recommendations:
+        if rec.get("priority") in ["critical", "high"]:
+            priority_emoji = "🔴" if rec["priority"] == "critical" else "🟡"
+            action = rec["action"].replace("_", " ").title()
+            reason = rec.get("reason", "")
+            vision_steps.append(f"{priority_emoji} VISION: {action} - {reason}")
+    
+    # Insert vision steps at the beginning (high priority)
+    decision.next_steps = vision_steps + decision.next_steps
+    
+    # Adjust ROI if intervention costs are specified
+    for rec in recommendations:
+        cost = rec.get("estimated_cost_brl", 0)
+        if cost > 0:
+            decision.total_estimated_roi_brl_year = max(
+                0, decision.total_estimated_roi_brl_year - cost
+            )
+    
+    return decision
 
 
 def _generate_next_steps(
